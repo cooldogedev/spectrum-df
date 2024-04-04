@@ -94,13 +94,13 @@ func newConn(innerConn net.Conn, pool packet.Pool) (c *conn, err error) {
 		}
 	}()
 
-	connectionRequestPack, err := c.expect(packet2.IDConnectionRequest, false)
+	connectionRequestPacket, err := c.expect(packet2.IDConnectionRequest, false)
 	if err != nil {
 		_ = c.Close()
 		return nil, err
 	}
 
-	connectionRequest, _ := connectionRequestPack.(*packet2.ConnectionRequest)
+	connectionRequest, _ := connectionRequestPacket.(*packet2.ConnectionRequest)
 	if err := json.Unmarshal(connectionRequest.ClientData, &c.clientData); err != nil {
 		_ = c.Close()
 		return nil, err
