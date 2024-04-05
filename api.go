@@ -2,6 +2,7 @@ package spectrum
 
 import (
 	"bytes"
+	"encoding/binary"
 	"github.com/cooldogedev/spectrum-df/internal"
 	"github.com/cooldogedev/spectrum/api/packet"
 	proto "github.com/cooldogedev/spectrum/protocol"
@@ -30,6 +31,10 @@ func (c *Client) WritePacket(pk packet.Packet) error {
 		buf.Reset()
 		internal.BufferPool.Put(buf)
 	}()
+
+	if err := binary.Write(buf, binary.LittleEndian, pk.ID()); err != nil {
+		return err
+	}
 	pk.Encode(buf)
 	return c.writer.Write(buf.Bytes())
 }
