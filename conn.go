@@ -80,20 +80,6 @@ func newConn(innerConn net.Conn, pool packet.Pool) (c *conn, err error) {
 		closed: make(chan struct{}),
 	}
 
-	go func() {
-		for {
-			select {
-			case <-c.closed:
-				return
-			default:
-				if err := c.reader.Read(); err != nil {
-					_ = c.Close()
-					return
-				}
-			}
-		}
-	}()
-
 	connectionRequestPacket, err := c.expect(packet2.IDConnectionRequest, false)
 	if err != nil {
 		_ = c.Close()
@@ -281,7 +267,12 @@ func (c *conn) read() (packet.Packet, error) {
 	case <-c.closed:
 		return nil, errors.New("connection closed")
 	default:
-		decompressed, err := c.compressor.Decompress(c.reader.ReadPacket())
+		payload, err := c.reader.ReadPacket()
+		if err != nil {
+			return nil, err
+		}
+
+		decompressed, err := c.compressor.Decompress(payload)
 		if err != nil {
 			return nil, err
 		}
