@@ -80,7 +80,7 @@ func newConn(innerConn net.Conn, pool packet.Pool) (c *conn, err error) {
 		closed: make(chan struct{}),
 	}
 
-	connectionRequestPacket, err := c.expect(packet2.IDConnectionRequest, false)
+	connectionRequestPacket, err := c.expect(packet2.IDConnectionRequest)
 	if err != nil {
 		_ = c.Close()
 		return nil, err
@@ -237,13 +237,13 @@ func (c *conn) StartGameContext(_ context.Context, data minecraft.GameData) (err
 		UseBlockNetworkIDHashes:      data.UseBlockNetworkIDHashes,
 	})
 
-	if _, err = c.expect(packet.IDRequestChunkRadius, true); err != nil {
+	if _, err = c.expect(packet.IDRequestChunkRadius); err != nil {
 		return err
 	}
 
 	_ = c.WritePacket(&packet.ChunkRadiusUpdated{ChunkRadius: 16})
 	_ = c.WritePacket(&packet.PlayStatus{Status: packet.PlayStatusLoginSuccess})
-	if _, err = c.expect(packet.IDSetLocalPlayerAsInitialised, true); err != nil {
+	if _, err = c.expect(packet.IDSetLocalPlayerAsInitialised); err != nil {
 		return err
 	}
 	return
@@ -305,14 +305,14 @@ func (c *conn) read() (packet.Packet, error) {
 }
 
 // expect reads a packet from the connection and expects it to have the ID passed.
-func (c *conn) expect(id uint32, deferrable bool) (pk packet.Packet, err error) {
+func (c *conn) expect(id uint32) (pk packet.Packet, err error) {
 	pk, err = c.ReadPacket()
 	if err != nil {
 		return nil, err
 	}
 
 	if pk.ID() != id {
-		return c.expect(id, deferrable)
+		return c.expect(id)
 	}
 	return
 }
