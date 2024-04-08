@@ -46,6 +46,7 @@ var packetsDecode = map[uint32]bool{
 }
 
 type conn struct {
+	addr       *net.UDPAddr
 	conn       net.Conn
 	compressor packet.Compression
 
@@ -87,6 +88,12 @@ func newConn(innerConn net.Conn, pool packet.Pool) (c *conn, err error) {
 	}
 
 	connectionRequest, _ := connectionRequestPacket.(*packet2.ConnectionRequest)
+	addr, err := net.ResolveUDPAddr("udp", connectionRequest.Addr)
+	if err != nil {
+		return nil, err
+	}
+
+	c.addr = addr
 	if err := json.Unmarshal(connectionRequest.ClientData, &c.clientData); err != nil {
 		_ = c.Close()
 		return nil, err
@@ -179,7 +186,7 @@ func (c *conn) ClientCacheEnabled() bool {
 
 // RemoteAddr ...
 func (c *conn) RemoteAddr() net.Addr {
-	return c.conn.RemoteAddr()
+	return c.addr
 }
 
 // Latency ...
