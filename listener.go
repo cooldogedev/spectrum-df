@@ -1,19 +1,27 @@
 package spectrum
 
 import (
-	"github.com/df-mc/dragonfly/server/session"
-	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 	"net"
+
+	"github.com/df-mc/dragonfly/server/session"
+	"github.com/sandertv/gophertunnel/minecraft/protocol/login"
+	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 )
 
-type Listener struct {
-	l net.Listener
+type Authentication interface {
+	Authenticate(identityData login.IdentityData, token string) bool
 }
 
-func NewListener(addr string) (Listener, error) {
+type Listener struct {
+	l    net.Listener
+	auth Authentication
+}
+
+func NewListener(addr string, auth Authentication) (Listener, error) {
 	netListener, err := net.Listen("tcp", addr)
 	return Listener{
-		l: netListener,
+		l:    netListener,
+		auth: auth,
 	}, err
 }
 
@@ -30,7 +38,7 @@ func (l Listener) Accept() (session.Conn, error) {
 		_ = tcpConn.SetReadBuffer(1024 * 1024 * 8)
 		_ = tcpConn.SetWriteBuffer(1024 * 1024 * 8)
 	}
-	return newConn(c, packet.NewClientPool())
+	return newConn(c, l.auth, packet.NewClientPool())
 }
 
 // Disconnect ...

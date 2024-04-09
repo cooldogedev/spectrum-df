@@ -3,10 +3,11 @@ package spectrum
 import (
 	"bytes"
 	"encoding/binary"
+	"net"
+
 	"github.com/cooldogedev/spectrum-df/internal"
 	"github.com/cooldogedev/spectrum/api/packet"
 	proto "github.com/cooldogedev/spectrum/protocol"
-	"net"
 )
 
 type Client struct {

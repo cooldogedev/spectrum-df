@@ -6,6 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
+	"sync"
+	"time"
+
 	"github.com/cooldogedev/spectrum-df/internal"
 	proto "github.com/cooldogedev/spectrum/protocol"
 	packet2 "github.com/cooldogedev/spectrum/server/packet"
@@ -14,9 +18,6 @@ import (
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/login"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
-	"net"
-	"sync"
-	"time"
 )
 
 const (
@@ -67,7 +68,7 @@ type conn struct {
 	closed chan struct{}
 }
 
-func newConn(innerConn net.Conn, pool packet.Pool) (c *conn, err error) {
+func newConn(innerConn net.Conn, auth Authentication, pool packet.Pool) (c *conn, err error) {
 	c = &conn{
 		conn:       innerConn,
 		compressor: packet.FlateCompression,
@@ -100,6 +101,11 @@ func newConn(innerConn net.Conn, pool packet.Pool) (c *conn, err error) {
 	}
 
 	if err := json.Unmarshal(connectionRequest.IdentityData, &c.identityData); err != nil {
+		_ = c.Close()
+		return nil, err
+	}
+
+	if auth != nil && !auth.Authenticate(c.identityData, connectionRequest.Token) {
 		_ = c.Close()
 		return nil, err
 	}
