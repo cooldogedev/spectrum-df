@@ -107,7 +107,7 @@ func newConn(innerConn net.Conn, auth Authentication, pool packet.Pool) (c *conn
 
 	if auth != nil && !auth.Authenticate(c.identityData, connectionRequest.Token) {
 		_ = c.Close()
-		return nil, err
+		return nil, errors.New("authentication failed")
 	}
 
 	_ = c.WritePacket(&packet2.ConnectionResponse{
