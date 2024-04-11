@@ -65,10 +65,12 @@ type conn struct {
 	pool   packet.Pool
 	header packet.Header
 
+	additionalPackets map[uint32]bool
+
 	closed chan struct{}
 }
 
-func newConn(innerConn net.Conn, auth Authentication, pool packet.Pool) (c *conn, err error) {
+func newConn(innerConn net.Conn, auth Authentication, additionalPackets map[uint32]bool, pool packet.Pool) (c *conn, err error) {
 	c = &conn{
 		conn:       innerConn,
 		compressor: packet.FlateCompression,
@@ -78,6 +80,8 @@ func newConn(innerConn net.Conn, auth Authentication, pool packet.Pool) (c *conn
 
 		pool:   pool,
 		header: packet.Header{},
+
+		additionalPackets: additionalPackets,
 
 		closed: make(chan struct{}),
 	}
@@ -159,10 +163,18 @@ func (c *conn) WritePacket(pk packet.Packet) error {
 
 	if decode, ok := packetsDecode[pk.ID()]; ok && decode {
 		data = append([]byte{packetDecodeNeeded}, data...)
+	} else if decode, ok := c.additionalPackets[pk.ID()]; ok && decode {
+		data = append([]byte{packetDecodeNeeded}, data...)
 	} else {
 		data = append([]byte{packetDecodeNotNeeded}, data...)
 	}
+
 	return c.writer.Write(data)
+}
+
+// DecodePacket sets a packet decode-able based off the input packet and action given
+func (c *conn) DecodePacket(id uint32, decode bool) {
+	c.additionalPackets[id] = decode
 }
 
 // Flush ...

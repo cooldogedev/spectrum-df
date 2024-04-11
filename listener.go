@@ -15,13 +15,16 @@ type Authentication interface {
 type Listener struct {
 	l    net.Listener
 	auth Authentication
+
+	additionalPackets map[uint32]bool
 }
 
-func NewListener(addr string, auth Authentication) (Listener, error) {
+func NewListener(addr string, auth Authentication, additionalPackets map[uint32]bool) (Listener, error) {
 	netListener, err := net.Listen("tcp", addr)
 	return Listener{
 		l:    netListener,
 		auth: auth,
+		additionalPackets: additionalPackets,
 	}, err
 }
 
@@ -38,7 +41,7 @@ func (l Listener) Accept() (session.Conn, error) {
 		_ = tcpConn.SetReadBuffer(1024 * 1024 * 8)
 		_ = tcpConn.SetWriteBuffer(1024 * 1024 * 8)
 	}
-	return newConn(c, l.auth, packet.NewClientPool())
+	return newConn(c, l.auth, l.additionalPackets, packet.NewClientPool())
 }
 
 // Disconnect ...

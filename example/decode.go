@@ -4,6 +4,7 @@ import (
 	"github.com/cooldogedev/spectrum-df"
 	"github.com/df-mc/dragonfly/server"
 	"github.com/df-mc/dragonfly/server/player/chat"
+	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 	"github.com/sirupsen/logrus"
 )
 
@@ -20,7 +21,9 @@ func main() {
 	}
 
 	conf.Listeners = []func(conf server.Config) (server.Listener, error){func(conf server.Config) (server.Listener, error) {
-		return spectrum.NewListener(":19133", nil, map[uint32]bool{})
+		return spectrum.NewListener(":19133", nil, map[uint32]bool{
+			packet.IDPlayerAuthInput: true,
+		})
 	}}
 	srv := conf.New()
 	srv.CloseOnProgramEnd()
