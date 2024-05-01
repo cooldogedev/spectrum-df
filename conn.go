@@ -25,27 +25,6 @@ const (
 	packetDecodeNotNeeded = 0x01
 )
 
-var packetsDecode = map[uint32]bool{
-	packet2.IDLatency:  true,
-	packet2.IDTransfer: true,
-
-	packet.IDAddActor:     true,
-	packet.IDAddItemActor: true,
-	packet.IDAddPainting:  true,
-	packet.IDAddPlayer:    true,
-
-	packet.IDBossEvent: true,
-
-	packet.IDMobEffect: true,
-
-	packet.IDPlayerList: true,
-
-	packet.IDRemoveActor:     true,
-	packet.IDRemoveObjective: true,
-
-	packet.IDSetDisplayObjective: true,
-}
-
 type conn struct {
 	addr       *net.UDPAddr
 	conn       net.Conn
@@ -157,7 +136,7 @@ func (c *conn) WritePacket(pk packet.Packet) error {
 		return err
 	}
 
-	if decode, ok := packetsDecode[pk.ID()]; ok && decode {
+	if decode, ok := packetDecode[pk.ID()]; ok && decode {
 		data = append([]byte{packetDecodeNeeded}, data...)
 	} else {
 		data = append([]byte{packetDecodeNotNeeded}, data...)

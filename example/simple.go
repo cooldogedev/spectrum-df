@@ -16,7 +16,7 @@ func main() {
 
 	conf, err := server.DefaultConfig().Config(log)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatal(err)
 	}
 
 	conf.Listeners = []func(conf server.Config) (server.Listener, error){func(conf server.Config) (server.Listener, error) {

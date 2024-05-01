@@ -3,6 +3,7 @@ package spectrum
 import (
 	"net"
 
+	packet2 "github.com/cooldogedev/spectrum/server/packet"
 	"github.com/df-mc/dragonfly/server/session"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/login"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
@@ -49,4 +50,31 @@ func (l Listener) Disconnect(conn session.Conn, _ string) error {
 // Close ...
 func (l Listener) Close() error {
 	return l.l.Close()
+}
+
+var packetDecode = map[uint32]bool{}
+
+func RegisterPacketDecode(id uint32, value bool) {
+	packetDecode[id] = value
+}
+
+func init() {
+	RegisterPacketDecode(packet2.IDLatency, true)
+	RegisterPacketDecode(packet2.IDTransfer, true)
+
+	RegisterPacketDecode(packet.IDAddActor, true)
+	RegisterPacketDecode(packet.IDAddItemActor, true)
+	RegisterPacketDecode(packet.IDAddPainting, true)
+	RegisterPacketDecode(packet.IDAddPlayer, true)
+
+	RegisterPacketDecode(packet.IDBossEvent, true)
+
+	RegisterPacketDecode(packet.IDMobEffect, true)
+
+	RegisterPacketDecode(packet.IDPlayerList, true)
+
+	RegisterPacketDecode(packet.IDRemoveActor, true)
+	RegisterPacketDecode(packet.IDRemoveObjective, true)
+
+	RegisterPacketDecode(packet.IDSetDisplayObjective, true)
 }
