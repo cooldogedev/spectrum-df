@@ -3,7 +3,7 @@ module github.com/cooldogedev/spectrum-df
 go 1.22.1
 
 require (
-	github.com/cooldogedev/spectrum v0.0.7
+	github.com/cooldogedev/spectrum v0.0.10
 	github.com/df-mc/dragonfly v0.9.16-0.20240429014602-97fdfe269e3c
 	github.com/google/uuid v1.6.0
 	github.com/sandertv/gophertunnel v1.37.0
