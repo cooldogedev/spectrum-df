@@ -3,7 +3,7 @@ module github.com/cooldogedev/spectrum-df
 go 1.22.1
 
 require (
-	github.com/cooldogedev/spectrum v0.0.10
+	github.com/cooldogedev/spectrum v0.0.12-0.20240522010210-c30e16b6b555
 	github.com/df-mc/dragonfly v0.9.16-0.20240429014602-97fdfe269e3c
 	github.com/google/uuid v1.6.0
 	github.com/sandertv/gophertunnel v1.37.0
@@ -24,6 +24,7 @@ require (
 	github.com/onsi/gomega v1.30.0 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/sandertv/go-raknet v1.13.0 // indirect
+	github.com/scylladb/go-set v1.0.2 // indirect
 	github.com/segmentio/fasthash v1.0.3 // indirect
 	golang.org/x/crypto v0.23.0 // indirect
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect

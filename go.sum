@@ -2,8 +2,8 @@ github.com/brentp/intintmap v0.0.0-20190211203843-30dc0ade9af9 h1:/G0ghZwrhou0Wq
 github.com/brentp/intintmap v0.0.0-20190211203843-30dc0ade9af9/go.mod h1:TOk10ahXejq9wkEaym3KPRNeuR/h5Jx+s8QRWIa2oTM=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
-github.com/cooldogedev/spectrum v0.0.10 h1:HJj6FsNKTNJZEcTkoM3dLACcwA5Ag0c++YMVkQySbn8=
-github.com/cooldogedev/spectrum v0.0.10/go.mod h1:ox7jfC3lWTz5kQbes9kmC/McyNSSb6s2iwv8EBegAq4=
+github.com/cooldogedev/spectrum v0.0.12-0.20240522010210-c30e16b6b555 h1:5Fpsi8vsGw6k1tWiwCdK41n8yuWtWetesWOIDFTuSyc=
+github.com/cooldogedev/spectrum v0.0.12-0.20240522010210-c30e16b6b555/go.mod h1:ox7jfC3lWTz5kQbes9kmC/McyNSSb6s2iwv8EBegAq4=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -15,6 +15,8 @@ github.com/df-mc/goleveldb v1.1.9 h1:ihdosZyy5jkQKrxucTQmN90jq/2lUwQnJZjIYIC/9YU
 github.com/df-mc/goleveldb v1.1.9/go.mod h1:+NHCup03Sci5q84APIA21z3iPZCuk6m6ABtg4nANCSk=
 github.com/df-mc/worldupgrader v1.0.14 h1:pDt4Pk5OwOBshJjATP8zbY/8cuGGO3JVrCEkmNe/fBQ=
 github.com/df-mc/worldupgrader v1.0.14/go.mod h1:tsSOLTRm9mpG7VHvYpAjjZrkRHWmSbKZAm9bOLNnlDk=
+github.com/fatih/set v0.2.1 h1:nn2CaJyknWE/6txyUDGwysr3G5QC6xWB/PtVjPBbeaA=
+github.com/fatih/set v0.2.1/go.mod h1:+RKtMCH+favT2+3YecHGxcc0b4KyVWA1QWWJUs4E0CI=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/go-gl/mathgl v1.1.0 h1:0lzZ+rntPX3/oGrDzYGdowSLC2ky8Osirvf5uAwfIEA=
 github.com/go-gl/mathgl v1.1.0/go.mod h1:yhpkQzEiH9yPyxDUGzkmgScbaBVlhC06qodikEM0ZwQ=
@@ -50,6 +52,8 @@ github.com/sandertv/go-raknet v1.13.0 h1:Jkovqz4FrBP7PCIBBirBRoWm7mQKNP/UTYbOOyB
 github.com/sandertv/go-raknet v1.13.0/go.mod h1:E/DgMFQUMvWOvXwQRLEsTNOoYqzNubfcgzqL0nMoPso=
 github.com/sandertv/gophertunnel v1.37.0 h1:yPzOp4W1GahLjtxldXa5K25saJK/XG7SiyEt6oMjm0I=
 github.com/sandertv/gophertunnel v1.37.0/go.mod h1:4El8ZfEpUmOMIJhPt5SCc1PyLNiuQ2+grWczrBvSGVs=
+github.com/scylladb/go-set v1.0.2 h1:SkvlMCKhP0wyyct6j+0IHJkBkSZL+TDzZ4E7f7BCcRE=
+github.com/scylladb/go-set v1.0.2/go.mod h1:DkpGd78rljTxKAnTDPFqXSGxvETQnJyuSOQwsHycqfs=
 github.com/segmentio/fasthash v1.0.3 h1:EI9+KE1EwvMLBWwjpRDc+fEM+prwxDYbslddQGtrmhM=
 github.com/segmentio/fasthash v1.0.3/go.mod h1:waKX8l2N8yckOgmSsXJi7x1ZfdKZ4x7KRMzBtS3oedY=
 github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=
