@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/cooldogedev/spectrum-df"
+	"github.com/cooldogedev/spectrum-df/transport"
 	"github.com/df-mc/dragonfly/server"
 	"github.com/df-mc/dragonfly/server/player/chat"
 	"github.com/sirupsen/logrus"
@@ -18,7 +19,7 @@ func main() {
 	}
 
 	conf.Listeners = []func(conf server.Config) (server.Listener, error){func(conf server.Config) (server.Listener, error) {
-		return spectrum.NewListener(":19133", nil, nil)
+		return spectrum.NewListener(":19133", nil, transport.NewTCP())
 	}}
 
 	srv := conf.New()

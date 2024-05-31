@@ -1,4 +1,4 @@
-package spectrum
+package internal
 
 import (
 	"bytes"
@@ -6,11 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"sync"
 	"time"
+	_ "unsafe"
 
-	"github.com/cooldogedev/spectrum-df/internal"
+	"github.com/cooldogedev/spectrum-df/util"
 	proto "github.com/cooldogedev/spectrum/protocol"
 	packet2 "github.com/cooldogedev/spectrum/server/packet"
 	"github.com/google/uuid"
@@ -25,9 +27,12 @@ const (
 	packetDecodeNotNeeded = 0x01
 )
 
-type conn struct {
+//go:linkname decodeMap spectrum.decodeMap
+var decodeMap map[uint32]bool
+
+type Conn struct {
 	addr       *net.UDPAddr
-	conn       net.Conn
+	conn       io.ReadWriteCloser
 	compressor packet.Compression
 
 	reader  *proto.Reader
@@ -41,22 +46,22 @@ type conn struct {
 	shieldID int32
 	latency  int64
 
-	pool   packet.Pool
 	header packet.Header
+	pool   packet.Pool
 
 	closed chan struct{}
 }
 
-func newConn(innerConn net.Conn, auth Authentication, pool packet.Pool) (c *conn, err error) {
-	c = &conn{
-		conn:       innerConn,
+func NewConn(conn io.ReadWriteCloser, authentication util.Authentication, pool packet.Pool) (c *Conn, err error) {
+	c = &Conn{
+		conn:       conn,
 		compressor: packet.FlateCompression,
 
-		reader: proto.NewReader(innerConn),
-		writer: proto.NewWriter(innerConn),
+		reader: proto.NewReader(conn),
+		writer: proto.NewWriter(conn),
 
-		pool:   pool,
 		header: packet.Header{},
+		pool:   pool,
 
 		closed: make(chan struct{}),
 	}
@@ -70,6 +75,7 @@ func newConn(innerConn net.Conn, auth Authentication, pool packet.Pool) (c *conn
 	connectionRequest, _ := connectionRequestPacket.(*packet2.ConnectionRequest)
 	addr, err := net.ResolveUDPAddr("udp", connectionRequest.Addr)
 	if err != nil {
+		_ = c.Close()
 		return nil, err
 	}
 
@@ -84,20 +90,20 @@ func newConn(innerConn net.Conn, auth Authentication, pool packet.Pool) (c *conn
 		return nil, err
 	}
 
-	if auth != nil && !auth.Authenticate(c.identityData, connectionRequest.Token) {
+	if authentication != nil && !authentication.Authenticate(c.identityData, connectionRequest.Token) {
 		_ = c.Close()
 		return nil, errors.New("authentication failed")
 	}
 
-	_ = c.WritePacket(&packet2.ConnectionResponse{
-		RuntimeID: 1,
-		UniqueID:  1,
-	})
-	return
+	if err := c.WritePacket(&packet2.ConnectionResponse{RuntimeID: 1, UniqueID: 1}); err != nil {
+		_ = c.Close()
+		return nil, err
+	}
+	return c, nil
 }
 
 // ReadPacket ...
-func (c *conn) ReadPacket() (packet.Packet, error) {
+func (c *Conn) ReadPacket() (packet.Packet, error) {
 	pk, err := c.read()
 	if err != nil {
 		return nil, err
@@ -116,12 +122,12 @@ func (c *conn) ReadPacket() (packet.Packet, error) {
 }
 
 // WritePacket ...
-func (c *conn) WritePacket(pk packet.Packet) error {
+func (c *Conn) WritePacket(pk packet.Packet) error {
 	c.writeMu.Lock()
-	buf := internal.BufferPool.Get().(*bytes.Buffer)
+	buf := BufferPool.Get().(*bytes.Buffer)
 	defer func() {
 		buf.Reset()
-		internal.BufferPool.Put(buf)
+		BufferPool.Put(buf)
 		c.writeMu.Unlock()
 	}()
 
@@ -136,7 +142,7 @@ func (c *conn) WritePacket(pk packet.Packet) error {
 		return err
 	}
 
-	if decode, ok := packetDecode[pk.ID()]; ok && decode {
+	if decode, ok := decodeMap[pk.ID()]; ok && decode {
 		data = append([]byte{packetDecodeNeeded}, data...)
 	} else {
 		data = append([]byte{packetDecodeNotNeeded}, data...)
@@ -145,42 +151,42 @@ func (c *conn) WritePacket(pk packet.Packet) error {
 }
 
 // Flush ...
-func (c *conn) Flush() error {
+func (c *Conn) Flush() error {
 	return nil
 }
 
 // ClientData ...
-func (c *conn) ClientData() login.ClientData {
+func (c *Conn) ClientData() login.ClientData {
 	return c.clientData
 }
 
 // IdentityData ...
-func (c *conn) IdentityData() login.IdentityData {
+func (c *Conn) IdentityData() login.IdentityData {
 	return c.identityData
 }
 
 // ChunkRadius ...
-func (c *conn) ChunkRadius() int {
+func (c *Conn) ChunkRadius() int {
 	return 16
 }
 
 // ClientCacheEnabled ...
-func (c *conn) ClientCacheEnabled() bool {
+func (c *Conn) ClientCacheEnabled() bool {
 	return true
 }
 
 // RemoteAddr ...
-func (c *conn) RemoteAddr() net.Addr {
+func (c *Conn) RemoteAddr() net.Addr {
 	return c.addr
 }
 
 // Latency ...
-func (c *conn) Latency() time.Duration {
+func (c *Conn) Latency() time.Duration {
 	return time.Duration(c.latency)
 }
 
 // StartGameContext ...
-func (c *conn) StartGameContext(_ context.Context, data minecraft.GameData) (err error) {
+func (c *Conn) StartGameContext(_ context.Context, data minecraft.GameData) (err error) {
 	for _, item := range data.Items {
 		if item.Name == "minecraft:shield" {
 			c.shieldID = int32(item.RuntimeID)
@@ -242,7 +248,7 @@ func (c *conn) StartGameContext(_ context.Context, data minecraft.GameData) (err
 }
 
 // Close ...
-func (c *conn) Close() (err error) {
+func (c *Conn) Close() (err error) {
 	select {
 	case <-c.closed:
 		return errors.New("connection already closed")
@@ -254,7 +260,7 @@ func (c *conn) Close() (err error) {
 }
 
 // read reads a packet from the reader and returns it.
-func (c *conn) read() (packet.Packet, error) {
+func (c *Conn) read() (packet.Packet, error) {
 	select {
 	case <-c.closed:
 		return nil, errors.New("connection closed")
@@ -269,10 +275,10 @@ func (c *conn) read() (packet.Packet, error) {
 			return nil, err
 		}
 
-		buf := internal.BufferPool.Get().(*bytes.Buffer)
+		buf := BufferPool.Get().(*bytes.Buffer)
 		defer func() {
 			buf.Reset()
-			internal.BufferPool.Put(buf)
+			BufferPool.Put(buf)
 
 			if r := recover(); r != nil {
 				err = fmt.Errorf("panic while reading packet: %v", r)
@@ -297,7 +303,7 @@ func (c *conn) read() (packet.Packet, error) {
 }
 
 // expect reads a packet from the connection and expects it to have the ID passed.
-func (c *conn) expect(id uint32) (pk packet.Packet, err error) {
+func (c *Conn) expect(id uint32) (pk packet.Packet, err error) {
 	pk, err = c.ReadPacket()
 	if err != nil {
 		return nil, err
