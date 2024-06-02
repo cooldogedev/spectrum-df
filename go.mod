@@ -3,7 +3,7 @@ module github.com/cooldogedev/spectrum-df
 go 1.22.1
 
 require (
-	github.com/cooldogedev/spectrum v0.0.15
+	github.com/cooldogedev/spectrum v0.0.18
 	github.com/df-mc/dragonfly v0.9.16-0.20240429014602-97fdfe269e3c
 	github.com/google/uuid v1.6.0
 	github.com/quic-go/quic-go v0.44.0
@@ -32,7 +32,7 @@ require (
 	github.com/segmentio/fasthash v1.0.3 // indirect
 	go.uber.org/mock v0.4.0 // indirect
 	golang.org/x/crypto v0.23.0 // indirect
-	golang.org/x/exp v0.0.0-20240530194437-404ba88c7ed0 // indirect
+	golang.org/x/exp v0.0.0-20240531132922-fd00a4e0eefc // indirect
 	golang.org/x/image v0.16.0 // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.25.0 // indirect
