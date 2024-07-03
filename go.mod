@@ -5,6 +5,7 @@ go 1.22.1
 require (
 	github.com/cooldogedev/spectrum v0.0.22
 	github.com/df-mc/dragonfly v0.9.16
+	github.com/golang/snappy v0.0.4
 	github.com/google/uuid v1.6.0
 	github.com/quic-go/quic-go v0.45.1
 	github.com/sandertv/gophertunnel v1.38.0
@@ -21,7 +22,6 @@ require (
 	github.com/go-gl/mathgl v1.1.0 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
-	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/pprof v0.0.0-20240625030939-27f56978b8b0 // indirect
 	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/muhammadmuzzammil1998/jsonc v1.0.0 // indirect
