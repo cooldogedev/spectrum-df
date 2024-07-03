@@ -23,8 +23,8 @@ import (
 )
 
 const (
-	packetDecodeNeeded    = 0x00
-	packetDecodeNotNeeded = 0x01
+	packetDecodeNeeded byte = iota
+	packetDecodeNotNeeded
 )
 
 //go:linkname decodeMap spectrum.decodeMap
@@ -35,9 +35,8 @@ type Conn struct {
 	conn       io.ReadWriteCloser
 	compressor packet.Compression
 
-	reader  *proto.Reader
-	writer  *proto.Writer
-	writeMu sync.Mutex
+	reader *proto.Reader
+	writer *proto.Writer
 
 	clientData   login.ClientData
 	identityData login.IdentityData
@@ -46,24 +45,25 @@ type Conn struct {
 	shieldID int32
 	latency  int64
 
-	header packet.Header
+	header *packet.Header
 	pool   packet.Pool
 
-	closed chan struct{}
+	ch chan struct{}
+	mu sync.Mutex
 }
 
-func NewConn(conn io.ReadWriteCloser, authentication util.Authentication, pool packet.Pool) (c *Conn, err error) {
-	c = &Conn{
+func NewConn(conn io.ReadWriteCloser, authentication util.Authentication, pool packet.Pool) (*Conn, error) {
+	c := &Conn{
 		conn:       conn,
 		compressor: packet.FlateCompression,
 
 		reader: proto.NewReader(conn),
 		writer: proto.NewWriter(conn),
 
-		header: packet.Header{},
+		header: &packet.Header{},
 		pool:   pool,
 
-		closed: make(chan struct{}),
+		ch: make(chan struct{}),
 	}
 
 	connectionRequestPacket, err := c.expect(packet2.IDConnectionRequest)
@@ -110,12 +110,8 @@ func (c *Conn) ReadPacket() (packet.Packet, error) {
 	}
 
 	if pk, ok := pk.(*packet2.Latency); ok {
-		now := time.Now().UnixMilli()
-		c.latency = (now - pk.Timestamp) + pk.Latency
-		_ = c.WritePacket(&packet2.Latency{
-			Timestamp: now,
-			Latency:   c.latency,
-		})
+		c.latency = (time.Now().UnixMilli() - pk.Timestamp) + pk.Latency
+		_ = c.WritePacket(&packet2.Latency{Timestamp: 0, Latency: c.latency})
 		return c.ReadPacket()
 	}
 	return pk, nil
@@ -123,12 +119,13 @@ func (c *Conn) ReadPacket() (packet.Packet, error) {
 
 // WritePacket ...
 func (c *Conn) WritePacket(pk packet.Packet) error {
-	c.writeMu.Lock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	buf := BufferPool.Get().(*bytes.Buffer)
 	defer func() {
 		buf.Reset()
 		BufferPool.Put(buf)
-		c.writeMu.Unlock()
 	}()
 
 	c.header.PacketID = pk.ID()
@@ -142,12 +139,11 @@ func (c *Conn) WritePacket(pk packet.Packet) error {
 		return err
 	}
 
+	decodeByte := packetDecodeNotNeeded
 	if decode, ok := decodeMap[pk.ID()]; ok && decode {
-		data = append([]byte{packetDecodeNeeded}, data...)
-	} else {
-		data = append([]byte{packetDecodeNotNeeded}, data...)
+		decodeByte = packetDecodeNeeded
 	}
-	return c.writer.Write(data)
+	return c.writer.Write(append([]byte{decodeByte}, data...))
 }
 
 // Flush ...
@@ -194,7 +190,7 @@ func (c *Conn) StartGameContext(_ context.Context, data minecraft.GameData) (err
 		}
 	}
 
-	_ = c.WritePacket(&packet.StartGame{
+	startGame := &packet.StartGame{
 		Difficulty:                   data.Difficulty,
 		EntityUniqueID:               data.EntityUniqueID,
 		EntityRuntimeID:              data.EntityRuntimeID,
@@ -233,14 +229,23 @@ func (c *Conn) StartGameContext(_ context.Context, data minecraft.GameData) (err
 		BaseGameVersion:              data.BaseGameVersion,
 		GameVersion:                  protocol.CurrentVersion,
 		UseBlockNetworkIDHashes:      data.UseBlockNetworkIDHashes,
-	})
+	}
+	if err = c.WritePacket(startGame); err != nil {
+		return err
+	}
 
 	if _, err = c.expect(packet.IDRequestChunkRadius); err != nil {
 		return err
 	}
 
-	_ = c.WritePacket(&packet.ChunkRadiusUpdated{ChunkRadius: 16})
-	_ = c.WritePacket(&packet.PlayStatus{Status: packet.PlayStatusLoginSuccess})
+	if err := c.WritePacket(&packet.ChunkRadiusUpdated{ChunkRadius: 16}); err != nil {
+		return err
+	}
+
+	if err := c.WritePacket(&packet.PlayStatus{Status: packet.PlayStatusLoginSuccess}); err != nil {
+		return err
+	}
+
 	if _, err = c.expect(packet.IDSetLocalPlayerAsInitialised); err != nil {
 		return err
 	}
@@ -250,10 +255,10 @@ func (c *Conn) StartGameContext(_ context.Context, data minecraft.GameData) (err
 // Close ...
 func (c *Conn) Close() (err error) {
 	select {
-	case <-c.closed:
+	case <-c.ch:
 		return errors.New("connection already closed")
 	default:
-		close(c.closed)
+		close(c.ch)
 		_ = c.conn.Close()
 		return
 	}
@@ -262,7 +267,7 @@ func (c *Conn) Close() (err error) {
 // read reads a packet from the reader and returns it.
 func (c *Conn) read() (packet.Packet, error) {
 	select {
-	case <-c.closed:
+	case <-c.ch:
 		return nil, errors.New("connection closed")
 	default:
 		payload, err := c.reader.ReadPacket()
@@ -275,17 +280,7 @@ func (c *Conn) read() (packet.Packet, error) {
 			return nil, err
 		}
 
-		buf := BufferPool.Get().(*bytes.Buffer)
-		defer func() {
-			buf.Reset()
-			BufferPool.Put(buf)
-
-			if r := recover(); r != nil {
-				err = fmt.Errorf("panic while reading packet: %v", r)
-			}
-		}()
-
-		buf.Write(decompressed)
+		buf := bytes.NewBuffer(decompressed)
 		header := packet.Header{}
 		if err := header.Read(buf); err != nil {
 			return nil, err
@@ -295,7 +290,6 @@ func (c *Conn) read() (packet.Packet, error) {
 		if !ok {
 			return nil, fmt.Errorf("unknown packet ID %v", header.PacketID)
 		}
-
 		pk := factory()
 		pk.Marshal(protocol.NewReader(buf, c.shieldID, false))
 		return pk, nil
@@ -303,14 +297,14 @@ func (c *Conn) read() (packet.Packet, error) {
 }
 
 // expect reads a packet from the connection and expects it to have the ID passed.
-func (c *Conn) expect(id uint32) (pk packet.Packet, err error) {
-	pk, err = c.ReadPacket()
+func (c *Conn) expect(id uint32) (packet.Packet, error) {
+	pk, err := c.ReadPacket()
 	if err != nil {
 		return nil, err
 	}
 
-	if pk.ID() != id {
-		return c.expect(id)
+	if pk.ID() == id {
+		return pk, nil
 	}
-	return
+	return c.expect(id)
 }
