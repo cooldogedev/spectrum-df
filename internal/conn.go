@@ -281,7 +281,7 @@ func (c *Conn) read() (packet.Packet, error) {
 		}
 
 		buf := bytes.NewBuffer(decompressed)
-		header := packet.Header{}
+		header := &packet.Header{}
 		if err := header.Read(buf); err != nil {
 			return nil, err
 		}
