@@ -16,6 +16,7 @@ import (
 	"github.com/cooldogedev/spectrum-df/util"
 	proto "github.com/cooldogedev/spectrum/protocol"
 	packet2 "github.com/cooldogedev/spectrum/server/packet"
+	"github.com/golang/snappy"
 	"github.com/google/uuid"
 	"github.com/sandertv/gophertunnel/minecraft"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
@@ -32,9 +33,8 @@ const (
 var decodeMap map[uint32]bool
 
 type Conn struct {
-	addr       *net.UDPAddr
-	conn       io.ReadWriteCloser
-	compressor packet.Compression
+	addr *net.UDPAddr
+	conn io.ReadWriteCloser
 
 	reader *proto.Reader
 	writer *proto.Writer
@@ -58,8 +58,7 @@ type Conn struct {
 
 func NewConn(conn io.ReadWriteCloser, authentication util.Authentication, pool packet.Pool) (*Conn, error) {
 	c := &Conn{
-		conn:       conn,
-		compressor: packet.FlateCompression,
+		conn: conn,
 
 		reader: proto.NewReader(conn),
 		writer: proto.NewWriter(conn),
@@ -141,16 +140,11 @@ func (c *Conn) WritePacket(pk packet.Packet) error {
 	}
 
 	pk.Marshal(protocol.NewWriter(buf, c.shieldID))
-	data, err := c.compressor.Compress(buf.Bytes())
-	if err != nil {
-		return err
-	}
-
 	decodeByte := packetDecodeNotNeeded
 	if decode, ok := decodeMap[pk.ID()]; ok && decode {
 		decodeByte = packetDecodeNeeded
 	}
-	return c.writer.Write(append([]byte{decodeByte}, data...))
+	return c.writer.Write(append([]byte{decodeByte}, snappy.Encode(nil, buf.Bytes())...))
 }
 
 // Flush ...
@@ -282,7 +276,7 @@ func (c *Conn) read() (packet.Packet, error) {
 			return nil, err
 		}
 
-		decompressed, err := c.compressor.Decompress(payload)
+		decompressed, err := snappy.Decode(nil, payload)
 		if err != nil {
 			return nil, err
 		}
