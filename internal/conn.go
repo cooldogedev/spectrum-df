@@ -29,7 +29,7 @@ const (
 	packetDecodeNotNeeded
 )
 
-//go:linkname decodeMap spectrum.decodeMap
+//go:linkname decodeMap github.com/cooldogedev/spectrum-df/util.decodeMap
 var decodeMap map[uint32]bool
 
 type Conn struct {
