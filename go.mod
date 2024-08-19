@@ -3,21 +3,21 @@ module github.com/cooldogedev/spectrum-df
 go 1.22.1
 
 require (
-	github.com/cooldogedev/spectrum v0.0.25
-	github.com/df-mc/dragonfly v0.9.17
+	github.com/brentp/intintmap v0.0.0-20190211203843-30dc0ade9af9
+	github.com/cooldogedev/spectrum v0.0.27
+	github.com/df-mc/dragonfly v0.9.18-0.20240818101738-29a214b79bd5
 	github.com/golang/snappy v0.0.4
 	github.com/google/uuid v1.6.0
 	github.com/quic-go/quic-go v0.46.0
-	github.com/sandertv/gophertunnel v1.39.3
+	github.com/sandertv/gophertunnel v1.40.2-0.20240819155723-46502d4cb6ce
 	github.com/sirupsen/logrus v1.9.3
 )
 
 require (
-	github.com/brentp/intintmap v0.0.0-20190211203843-30dc0ade9af9 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/df-mc/atomic v1.10.0 // indirect
 	github.com/df-mc/goleveldb v1.1.9 // indirect
-	github.com/df-mc/worldupgrader v1.0.15 // indirect
+	github.com/df-mc/worldupgrader v1.0.16 // indirect
 	github.com/francoispqt/gojay v1.2.13 // indirect
 	github.com/go-gl/mathgl v1.1.0 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.3 // indirect

@@ -33,7 +33,12 @@ func (l *Listener) Accept() (session.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	return internal.NewConn(c, l.authentication, packet.NewClientPool())
+
+	var authenticator internal.Authenticator
+	if l.authentication != nil {
+		authenticator = l.authentication.Authenticate
+	}
+	return internal.NewConn(c, authenticator, packet.NewClientPool())
 }
 
 // Disconnect ...

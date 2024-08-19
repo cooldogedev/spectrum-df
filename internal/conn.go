@@ -11,9 +11,7 @@ import (
 	"net"
 	"sync"
 	"time"
-	_ "unsafe"
 
-	"github.com/cooldogedev/spectrum-df/util"
 	proto "github.com/cooldogedev/spectrum/protocol"
 	packet2 "github.com/cooldogedev/spectrum/server/packet"
 	"github.com/golang/snappy"
@@ -28,9 +26,6 @@ const (
 	packetDecodeNeeded byte = iota
 	packetDecodeNotNeeded
 )
-
-//go:linkname decodeMap github.com/cooldogedev/spectrum-df/util.decodeMap
-var decodeMap map[uint32]bool
 
 type Conn struct {
 	addr *net.UDPAddr
@@ -56,7 +51,7 @@ type Conn struct {
 	mu sync.Mutex
 }
 
-func NewConn(conn io.ReadWriteCloser, authentication util.Authentication, pool packet.Pool) (*Conn, error) {
+func NewConn(conn io.ReadWriteCloser, authenticator Authenticator, pool packet.Pool) (*Conn, error) {
 	c := &Conn{
 		conn: conn,
 
@@ -93,7 +88,7 @@ func NewConn(conn io.ReadWriteCloser, authentication util.Authentication, pool p
 		return nil, err
 	}
 
-	if authentication != nil && !authentication.Authenticate(c.identityData, connectionRequest.Token) {
+	if authenticator != nil && !authenticator(c.identityData, connectionRequest.Token) {
 		_ = c.Close()
 		return nil, errors.New("authentication failed")
 	}
@@ -139,11 +134,13 @@ func (c *Conn) WritePacket(pk packet.Packet) error {
 		return err
 	}
 
-	pk.Marshal(protocol.NewWriter(buf, c.shieldID))
-	decodeByte := packetDecodeNotNeeded
-	if decode, ok := decodeMap[pk.ID()]; ok && decode {
+	var decodeByte byte
+	if PacketExists(pk.ID()) {
 		decodeByte = packetDecodeNeeded
+	} else {
+		decodeByte = packetDecodeNotNeeded
 	}
+	pk.Marshal(protocol.NewWriter(buf, c.shieldID))
 	return c.writer.Write(append([]byte{decodeByte}, snappy.Encode(nil, buf.Bytes())...))
 }
 
