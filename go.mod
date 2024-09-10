@@ -9,7 +9,7 @@ require (
 	github.com/golang/snappy v0.0.4
 	github.com/google/uuid v1.6.0
 	github.com/quic-go/quic-go v0.46.0
-	github.com/sandertv/gophertunnel v1.40.2-0.20240819155723-46502d4cb6ce
+	github.com/sandertv/gophertunnel v1.40.2-0.20240901120213-8954c4aef268
 	github.com/sirupsen/logrus v1.9.3
 )
 
@@ -26,6 +26,7 @@ require (
 	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/muhammadmuzzammil1998/jsonc v1.0.0 // indirect
 	github.com/onsi/ginkgo/v2 v2.20.0 // indirect
+	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/sandertv/go-raknet v1.14.1 // indirect
 	github.com/segmentio/fasthash v1.0.3 // indirect

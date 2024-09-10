@@ -107,6 +107,8 @@ github.com/onsi/gomega v1.4.3/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1Cpa
 github.com/onsi/gomega v1.34.1 h1:EUMJIKUjM8sKjYbtxQI9A4z2o+rruxnzNvpknOXie6k=
 github.com/onsi/gomega v1.34.1/go.mod h1:kU1QgUvBDLXBJq618Xvm2LUX6rSAfRaFRTcdOeDLwwY=
 github.com/openzipkin/zipkin-go v0.1.1/go.mod h1:NtoC/o8u3JlF1lSlyPNswIbeQH9bJTmOf0Erfk+hxe8=
+github.com/pelletier/go-toml v1.9.5 h1:4yBQzkHv+7BHq2PQUZF3Mx0IYxG7LsP222s7Agd3ve8=
+github.com/pelletier/go-toml v1.9.5/go.mod h1:u1nR/EPcESfeI/szUZKdtJ0xRNbUoANCkoOuaOx1Y+c=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
@@ -123,6 +125,8 @@ github.com/sandertv/go-raknet v1.14.1 h1:V2Gslo+0x4jfj+p0PM48mWxmMbYkxSlgeKy//y3
 github.com/sandertv/go-raknet v1.14.1/go.mod h1:/yysjwfCXm2+2OY8mBazLzcxJ3irnylKCyG3FLgUPVU=
 github.com/sandertv/gophertunnel v1.40.2-0.20240819155723-46502d4cb6ce h1:4iKcIz/FF4lAc1J8qdGVPTbyelfaH4vabmZDpkfefsU=
 github.com/sandertv/gophertunnel v1.40.2-0.20240819155723-46502d4cb6ce/go.mod h1:uSaX7RbVaCcxsGAx2vyZnkT0M6kZFGCdAqLn0+wuKyY=
+github.com/sandertv/gophertunnel v1.40.2-0.20240901120213-8954c4aef268 h1:nYZg5PdYELahZ6nj/guHMT1s+asQ9k1YbvjsECfYlVo=
+github.com/sandertv/gophertunnel v1.40.2-0.20240901120213-8954c4aef268/go.mod h1:uSaX7RbVaCcxsGAx2vyZnkT0M6kZFGCdAqLn0+wuKyY=
 github.com/segmentio/fasthash v1.0.3 h1:EI9+KE1EwvMLBWwjpRDc+fEM+prwxDYbslddQGtrmhM=
 github.com/segmentio/fasthash v1.0.3/go.mod h1:waKX8l2N8yckOgmSsXJi7x1ZfdKZ4x7KRMzBtS3oedY=
 github.com/sergi/go-diff v1.0.0/go.mod h1:0CfEIISq7TuYL3j771MWULgwwjU+GofnZX9QAmXWZgo=
