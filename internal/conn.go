@@ -386,16 +386,13 @@ func (c *Conn) translatePacket(pk packet.Packet, serverSent bool) packet.Packet 
 	case *packet.EmoteList:
 		pk.PlayerRuntimeID = c.translateRuntimeID(pk.PlayerRuntimeID, serverSent)
 	case *packet.Event:
-		pk.EntityRuntimeID = c.translateRuntimeID(pk.EntityRuntimeID, serverSent)
+		pk.EntityRuntimeID = int64(c.translateRuntimeID(uint64(pk.EntityRuntimeID), serverSent))
 		switch data := pk.Event.(type) {
 		case *protocol.MobKilledEvent:
 			data.KillerEntityUniqueID = c.translateUniqueID(data.KillerEntityUniqueID, serverSent)
 			data.VictimEntityUniqueID = c.translateUniqueID(data.VictimEntityUniqueID, serverSent)
 		case *protocol.BossKilledEvent:
 			data.BossEntityUniqueID = c.translateUniqueID(data.BossEntityUniqueID, serverSent)
-		case *protocol.PetDiedEvent:
-			data.KillerEntityUniqueID = c.translateUniqueID(data.KillerEntityUniqueID, serverSent)
-			data.PetEntityUniqueID = c.translateUniqueID(data.PetEntityUniqueID, serverSent)
 		}
 	case *packet.Interact:
 		pk.TargetEntityRuntimeID = c.translateRuntimeID(pk.TargetEntityRuntimeID, serverSent)
