@@ -15,7 +15,7 @@ type Listener struct {
 
 func NewListener(addr string, authentication util.Authentication, transport tr.Transport) (*Listener, error) {
 	if transport == nil {
-		transport = tr.NewTCP()
+		transport = tr.NewSpectral()
 	}
 
 	if err := transport.Listen(addr); err != nil {

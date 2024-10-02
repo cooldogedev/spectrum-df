@@ -1,10 +1,11 @@
 module github.com/cooldogedev/spectrum-df
 
-go 1.22.1
+go 1.23.0
 
 require (
 	github.com/brentp/intintmap v0.0.0-20190211203843-30dc0ade9af9
-	github.com/cooldogedev/spectrum v0.0.28
+	github.com/cooldogedev/spectral v0.0.1
+	github.com/cooldogedev/spectrum v0.0.29
 	github.com/df-mc/dragonfly v0.9.19-0.20240921160251-812e3b81ff84
 	github.com/golang/snappy v0.0.4
 	github.com/google/uuid v1.6.0
@@ -21,7 +22,7 @@ require (
 	github.com/go-gl/mathgl v1.1.0 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
-	github.com/google/pprof v0.0.0-20240929191954-255acd752d31 // indirect
+	github.com/google/pprof v0.0.0-20241001023024-f4c0cfd0cf1d // indirect
 	github.com/klauspost/compress v1.17.10 // indirect
 	github.com/muhammadmuzzammil1998/jsonc v1.0.0 // indirect
 	github.com/onsi/ginkgo/v2 v2.20.2 // indirect
