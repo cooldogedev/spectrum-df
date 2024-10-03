@@ -4,8 +4,8 @@ go 1.23.0
 
 require (
 	github.com/brentp/intintmap v0.0.0-20190211203843-30dc0ade9af9
-	github.com/cooldogedev/spectral v0.0.1
-	github.com/cooldogedev/spectrum v0.0.29
+	github.com/cooldogedev/spectral v0.0.2
+	github.com/cooldogedev/spectrum v0.0.30
 	github.com/df-mc/dragonfly v0.9.19-0.20240921160251-812e3b81ff84
 	github.com/golang/snappy v0.0.4
 	github.com/google/uuid v1.6.0
