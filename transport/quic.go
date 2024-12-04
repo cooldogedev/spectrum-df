@@ -14,20 +14,19 @@ import (
 type QUIC struct {
 	cert     tls.Certificate
 	listener *quic.Listener
-
 	incoming chan io.ReadWriteCloser
 	closed   chan struct{}
 }
 
 func NewQUIC(cert tls.Certificate) *QUIC {
 	return &QUIC{
-		cert: cert,
-
-		incoming: make(chan io.ReadWriteCloser),
+		cert:     cert,
+		incoming: make(chan io.ReadWriteCloser, 100),
 		closed:   make(chan struct{}),
 	}
 }
 
+// Listen ...
 func (q *QUIC) Listen(addr string) (err error) {
 	listener, err := quic.ListenAddr(
 		addr,

@@ -16,11 +16,12 @@ type Spectral struct {
 
 func NewSpectral() *Spectral {
 	return &Spectral{
-		incoming: make(chan io.ReadWriteCloser),
+		incoming: make(chan io.ReadWriteCloser, 100),
 		closed:   make(chan struct{}),
 	}
 }
 
+// Listen ...
 func (s *Spectral) Listen(addr string) (err error) {
 	listener, err := spectral.Listen(addr)
 	if err != nil {
