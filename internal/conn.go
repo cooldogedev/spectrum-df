@@ -365,8 +365,6 @@ func (c *Conn) translatePacket(pk packet.Packet, serverSent bool) packet.Packet 
 				pk.TrackedObjects[i] = x
 			}
 		}
-	case *packet.ClientCheatAbility:
-		pk.AbilityData.EntityUniqueID = c.translateUniqueID(pk.AbilityData.EntityUniqueID, serverSent)
 	case *packet.CommandBlockUpdate:
 		if !pk.Block {
 			pk.MinecartEntityRuntimeID = c.translateRuntimeID(pk.MinecartEntityRuntimeID, serverSent)
@@ -425,7 +423,7 @@ func (c *Conn) translatePacket(pk packet.Packet, serverSent bool) packet.Packet 
 	case *packet.PlayerAction:
 		pk.EntityRuntimeID = c.translateRuntimeID(pk.EntityRuntimeID, serverSent)
 	case *packet.PlayerAuthInput:
-		if pk.InputData&packet.InputFlagClientPredictedVehicle != 0 {
+		if pk.InputData.Load(packet.InputFlagClientPredictedVehicle) {
 			pk.ClientPredictedVehicle = c.translateUniqueID(pk.ClientPredictedVehicle, serverSent)
 		}
 	case *packet.PlayerList:
