@@ -42,7 +42,11 @@ func (l *Listener) Accept() (session.Conn, error) {
 }
 
 // Disconnect ...
-func (l *Listener) Disconnect(conn session.Conn, _ string) error {
+func (l *Listener) Disconnect(conn session.Conn, reason string) error {
+	_ = conn.WritePacket(&packet.Disconnect{
+		HideDisconnectionScreen: reason == "",
+		Message:                 reason,
+	})
 	return conn.Close()
 }
 
