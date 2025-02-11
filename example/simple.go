@@ -22,6 +22,6 @@ func main() {
 	srv := conf.New()
 	srv.CloseOnProgramEnd()
 	srv.Listen()
-	for srv.Accept(nil) {
+	for range srv.Accept() {
 	}
 }

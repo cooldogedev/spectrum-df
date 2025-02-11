@@ -20,6 +20,8 @@ var internalPackets = []uint32{
 
 	packet.IDChunkRadiusUpdated,
 
+	packet.IDItemRegistry,
+
 	packet.IDMobEffect,
 
 	packet.IDPlayerList,

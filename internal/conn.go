@@ -207,7 +207,6 @@ func (c *Conn) StartGameContext(_ context.Context, data minecraft.GameData) (err
 		GameRules:                    data.GameRules,
 		Time:                         data.Time,
 		Blocks:                       data.CustomBlocks,
-		Items:                        data.Items,
 		AchievementsDisabled:         true,
 		Generator:                    1,
 		EducationFeaturesEnabled:     true,
@@ -229,6 +228,10 @@ func (c *Conn) StartGameContext(_ context.Context, data minecraft.GameData) (err
 		UseBlockNetworkIDHashes:      data.UseBlockNetworkIDHashes,
 	}
 	if err = c.WritePacket(startGame); err != nil {
+		return err
+	}
+
+	if err = c.WritePacket(&packet.ItemRegistry{Items: data.Items}); err != nil {
 		return err
 	}
 
