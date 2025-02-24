@@ -16,7 +16,7 @@ func NewKCP() *KCP {
 
 // Listen ...
 func (k *KCP) Listen(addr string) (err error) {
-	listener, err := kcp.Listen(addr)
+	listener, err := kcp.ListenWithOptions(addr, nil, 10, 3)
 	if err != nil {
 		return err
 	}
