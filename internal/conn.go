@@ -37,7 +37,6 @@ type Conn struct {
 	clientData   login.ClientData
 	identityData login.IdentityData
 
-	gameData  minecraft.GameData
 	runtimeID uint64
 	uniqueID  int64
 
