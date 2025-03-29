@@ -19,8 +19,8 @@ github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XL
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cooldogedev/spectral v0.0.5 h1:VTWbJkqwDqg/eeDwIXwC6+jpXEGlOzu6QzP1hSEUhIM=
 github.com/cooldogedev/spectral v0.0.5/go.mod h1:Oq9dVLgqaRiS/hZvKvLk/XWXFOZmmTKM29u6o4GBe84=
-github.com/cooldogedev/spectrum v0.0.36 h1:w/LlwlvP6jbMb9Jmwx+uJ0SbvsadC6gSVfdrDrSNPLo=
-github.com/cooldogedev/spectrum v0.0.36/go.mod h1:RCsYvS4kEy3rDTHR9JNXYvepnLKqH9zPOuoxj6QIPZ4=
+github.com/cooldogedev/spectrum v0.0.37 h1:iURH9yel+rHLsbXCIXZSrhA123yx0mSINjm7D8j6M0w=
+github.com/cooldogedev/spectrum v0.0.37/go.mod h1:09P7fYR4ACmAEXQPg9aa3TsCBumG3ktbE7Jvb69Nn24=
 github.com/coreos/go-systemd v0.0.0-20181012123002-c6f51f82210d/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
