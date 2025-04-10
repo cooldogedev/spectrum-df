@@ -265,35 +265,42 @@ func (c *Conn) Close() (err error) {
 }
 
 // read reads a packet from the reader and returns it.
-func (c *Conn) read() (packet.Packet, error) {
+func (c *Conn) read() (pk packet.Packet, err error) {
 	select {
 	case <-c.ch:
 		return nil, errors.New("connection closed")
 	default:
-		payload, err := c.reader.ReadPacket()
-		if err != nil {
-			return nil, err
-		}
-
-		decompressed, err := snappy.Decode(nil, payload)
-		if err != nil {
-			return nil, err
-		}
-
-		buf := bytes.NewBuffer(decompressed)
-		header := &packet.Header{}
-		if err := header.Read(buf); err != nil {
-			return nil, err
-		}
-
-		factory, ok := c.pool[header.PacketID]
-		if !ok {
-			return nil, fmt.Errorf("unknown packet ID %v", header.PacketID)
-		}
-		pk := factory()
-		pk.Marshal(protocol.NewReader(buf, c.shieldID, false))
-		return c.translatePacket(pk, false), nil
 	}
+
+	payload, err := c.reader.ReadPacket()
+	if err != nil {
+		return nil, err
+	}
+
+	decompressed, err := snappy.Decode(nil, payload)
+	if err != nil {
+		return nil, err
+	}
+
+	buf := bytes.NewBuffer(decompressed)
+	header := &packet.Header{}
+	if err := header.Read(buf); err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("panic while decoding packet %v: %v", header.PacketID, r)
+		}
+	}()
+	factory, ok := c.pool[header.PacketID]
+	if !ok {
+		return nil, fmt.Errorf("unknown packet ID %v", header.PacketID)
+	}
+	pk = factory()
+	pk.Marshal(protocol.NewReader(buf, c.shieldID, false))
+	pk = c.translatePacket(pk, false)
+	return
 }
 
 // expect reads a packet from the connection and expects it to have the ID passed.
