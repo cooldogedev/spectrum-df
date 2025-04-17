@@ -1,4 +1,4 @@
-package internal
+package spectrum
 
 import (
 	"github.com/brentp/intintmap"
@@ -34,16 +34,24 @@ var internalPackets = []uint32{
 	packet.IDStartGame,
 }
 
-var PacketMap *intintmap.Map
+var packetMap *intintmap.Map
 
-func PacketExists(packet uint32) bool {
-	_, ok := PacketMap.Get(int64(packet))
+func RegisterPacketDecode(id uint32, value bool) {
+	if value {
+		packetMap.Put(int64(id), 1)
+	} else {
+		packetMap.Del(int64(id))
+	}
+}
+
+func shouldDecodePacket(packet uint32) bool {
+	_, ok := packetMap.Get(int64(packet))
 	return ok
 }
 
 func init() {
-	PacketMap = intintmap.New(len(internalPackets), 0.999)
+	packetMap = intintmap.New(len(internalPackets), 0.999)
 	for _, id := range internalPackets {
-		PacketMap.Put(int64(id), 1)
+		packetMap.Put(int64(id), 1)
 	}
 }

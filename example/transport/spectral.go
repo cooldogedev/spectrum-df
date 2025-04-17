@@ -18,7 +18,7 @@ func main() {
 	}
 
 	conf.Listeners = []func(conf server.Config) (server.Listener, error){func(conf server.Config) (server.Listener, error) {
-		return spectrum.NewListener(":19133", nil, transport.NewSpectral())
+		return spectrum.NewListener(":19133", transport.NewSpectral())
 	}}
 	srv := conf.New()
 	srv.CloseOnProgramEnd()

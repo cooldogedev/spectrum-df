@@ -1,4 +1,4 @@
-package internal
+package spectrum
 
 import (
 	"bytes"
@@ -10,6 +10,7 @@ import (
 	"io"
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	proto "github.com/cooldogedev/spectrum/protocol"
@@ -23,46 +24,46 @@ import (
 )
 
 const (
-	packetDecodeNeeded byte = iota
+	packetDecodeNeeded = uint8(iota)
 	packetDecodeNotNeeded
 )
 
-type Conn struct {
-	addr *net.UDPAddr
-	conn io.ReadWriteCloser
-
-	reader *proto.Reader
-	writer *proto.Writer
-
-	clientData   login.ClientData
-	identityData login.IdentityData
-
-	runtimeID uint64
-	uniqueID  int64
-
-	shieldID int32
-	latency  int64
-
-	header *packet.Header
-	pool   packet.Pool
-
-	ch chan struct{}
-	mu sync.Mutex
+var bufferPool = sync.Pool{
+	New: func() any {
+		return bytes.NewBuffer(make([]byte, 0, 256))
+	},
 }
 
-func NewConn(conn io.ReadWriteCloser, authenticator Authenticator, pool packet.Pool) (*Conn, error) {
-	c := &Conn{
-		conn: conn,
+var headerPool = sync.Pool{
+	New: func() any {
+		return &packet.Header{}
+	},
+}
 
-		reader: proto.NewReader(conn),
-		writer: proto.NewWriter(conn),
+type conn struct {
+	addr         *net.UDPAddr
+	conn         io.ReadWriteCloser
+	reader       *proto.Reader
+	writer       *proto.Writer
+	clientData   login.ClientData
+	identityData login.IdentityData
+	runtimeID    uint64
+	uniqueID     int64
+	shieldID     int32
+	latency      atomic.Value
+	pool         packet.Pool
+	closed       chan struct{}
+	mu           sync.Mutex
+}
 
-		header: &packet.Header{},
+func newConn(rwc io.ReadWriteCloser, pool packet.Pool) (*conn, error) {
+	c := &conn{
+		conn:   rwc,
+		reader: proto.NewReader(rwc),
+		writer: proto.NewWriter(rwc),
 		pool:   pool,
-
-		ch: make(chan struct{}),
+		closed: make(chan struct{}),
 	}
-
 	connectionRequestPacket, err := c.expect(packet2.IDConnectionRequest)
 	if err != nil {
 		_ = c.Close()
@@ -87,54 +88,53 @@ func NewConn(conn io.ReadWriteCloser, authenticator Authenticator, pool packet.P
 		return nil, err
 	}
 
-	if authenticator != nil && !authenticator(c.identityData, connectionRequest.Token) {
-		_ = c.Close()
-		return nil, errors.New("authentication failed")
-	}
-
 	c.runtimeID = uint64(crc32.ChecksumIEEE([]byte(c.identityData.XUID)))
 	c.uniqueID = int64(c.runtimeID)
 	if err := c.WritePacket(&packet2.ConnectionResponse{RuntimeID: c.runtimeID, UniqueID: c.uniqueID}); err != nil {
 		_ = c.Close()
 		return nil, err
 	}
+	setCache(c.identityData.XUID, connectionRequest.Cache, connectionRequest.ProtocolID)
 	return c, nil
 }
 
 // ReadPacket ...
-func (c *Conn) ReadPacket() (packet.Packet, error) {
+func (c *conn) ReadPacket() (packet.Packet, error) {
 	pk, err := c.read()
 	if err != nil {
 		return nil, err
 	}
 
 	if pk, ok := pk.(*packet2.Latency); ok {
-		c.latency = (time.Now().UnixMilli() - pk.Timestamp) + pk.Latency
-		_ = c.WritePacket(&packet2.Latency{Timestamp: 0, Latency: c.latency})
+		latency := (time.Now().UnixMilli() - pk.Timestamp) + pk.Latency
+		c.latency.Store(time.Duration(latency) * time.Millisecond)
+		_ = c.WritePacket(&packet2.Latency{Timestamp: 0, Latency: latency})
 		return c.ReadPacket()
 	}
 	return pk, nil
 }
 
 // WritePacket ...
-func (c *Conn) WritePacket(pk packet.Packet) error {
+func (c *conn) WritePacket(pk packet.Packet) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	buf := BufferPool.Get().(*bytes.Buffer)
+	buf := bufferPool.Get().(*bytes.Buffer)
+	header := headerPool.Get().(*packet.Header)
 	defer func() {
 		buf.Reset()
-		BufferPool.Put(buf)
+		bufferPool.Put(buf)
+		headerPool.Put(header)
 	}()
 
 	pk = c.translatePacket(pk, true)
-	c.header.PacketID = pk.ID()
-	if err := c.header.Write(buf); err != nil {
+	header.PacketID = pk.ID()
+	if err := header.Write(buf); err != nil {
 		return err
 	}
 
 	var decodeByte byte
-	if PacketExists(pk.ID()) {
+	if shouldDecodePacket(pk.ID()) {
 		decodeByte = packetDecodeNeeded
 	} else {
 		decodeByte = packetDecodeNotNeeded
@@ -144,42 +144,42 @@ func (c *Conn) WritePacket(pk packet.Packet) error {
 }
 
 // Flush ...
-func (c *Conn) Flush() error {
+func (c *conn) Flush() error {
 	return nil
 }
 
 // ClientData ...
-func (c *Conn) ClientData() login.ClientData {
+func (c *conn) ClientData() login.ClientData {
 	return c.clientData
 }
 
 // IdentityData ...
-func (c *Conn) IdentityData() login.IdentityData {
+func (c *conn) IdentityData() login.IdentityData {
 	return c.identityData
 }
 
 // ChunkRadius ...
-func (c *Conn) ChunkRadius() int {
+func (c *conn) ChunkRadius() int {
 	return 16
 }
 
 // ClientCacheEnabled ...
-func (c *Conn) ClientCacheEnabled() bool {
+func (c *conn) ClientCacheEnabled() bool {
 	return false
 }
 
 // RemoteAddr ...
-func (c *Conn) RemoteAddr() net.Addr {
+func (c *conn) RemoteAddr() net.Addr {
 	return c.addr
 }
 
 // Latency ...
-func (c *Conn) Latency() time.Duration {
-	return time.Duration(c.latency)
+func (c *conn) Latency() time.Duration {
+	return c.latency.Load().(time.Duration)
 }
 
 // StartGameContext ...
-func (c *Conn) StartGameContext(_ context.Context, data minecraft.GameData) (err error) {
+func (c *conn) StartGameContext(_ context.Context, data minecraft.GameData) (err error) {
 	for _, item := range data.Items {
 		if item.Name == "minecraft:shield" {
 			c.shieldID = int32(item.RuntimeID)
@@ -253,21 +253,22 @@ func (c *Conn) StartGameContext(_ context.Context, data minecraft.GameData) (err
 }
 
 // Close ...
-func (c *Conn) Close() (err error) {
+func (c *conn) Close() (err error) {
 	select {
-	case <-c.ch:
+	case <-c.closed:
 		return errors.New("connection already closed")
 	default:
-		close(c.ch)
+		close(c.closed)
 		_ = c.conn.Close()
+		deleteCache(c.identityData.XUID)
 		return
 	}
 }
 
 // read reads a packet from the reader and returns it.
-func (c *Conn) read() (pk packet.Packet, err error) {
+func (c *conn) read() (pk packet.Packet, err error) {
 	select {
-	case <-c.ch:
+	case <-c.closed:
 		return nil, errors.New("connection closed")
 	default:
 	}
@@ -283,7 +284,10 @@ func (c *Conn) read() (pk packet.Packet, err error) {
 	}
 
 	buf := bytes.NewBuffer(decompressed)
-	header := &packet.Header{}
+	header := headerPool.Get().(*packet.Header)
+	defer func() {
+		headerPool.Put(header)
+	}()
 	if err := header.Read(buf); err != nil {
 		return nil, err
 	}
@@ -304,7 +308,7 @@ func (c *Conn) read() (pk packet.Packet, err error) {
 }
 
 // expect reads a packet from the connection and expects it to have the ID passed.
-func (c *Conn) expect(id uint32) (packet.Packet, error) {
+func (c *conn) expect(id uint32) (packet.Packet, error) {
 	pk, err := c.ReadPacket()
 	if err != nil {
 		return nil, err
@@ -319,7 +323,7 @@ func (c *Conn) expect(id uint32) (packet.Packet, error) {
 // translatePacket processes and translates entity identifiers in the given packet.
 // It converts runtime and unique IDs between client and server representations depending
 // on the direction of the packet.
-func (c *Conn) translatePacket(pk packet.Packet, serverSent bool) packet.Packet {
+func (c *conn) translatePacket(pk packet.Packet, serverSent bool) packet.Packet {
 	switch pk := pk.(type) {
 	case *packet.ActorEvent:
 		pk.EntityRuntimeID = c.translateRuntimeID(pk.EntityRuntimeID, serverSent)
@@ -506,7 +510,7 @@ func (c *Conn) translatePacket(pk packet.Packet, serverSent bool) packet.Packet 
 
 // translateRuntimeID converts a runtime ID based on whether the packet was sent by the server or by the client.
 // It converts the client-side runtime ID to the server-side runtime ID and vice versa based on the packet direction.
-func (c *Conn) translateRuntimeID(runtimeId uint64, serverSent bool) uint64 {
+func (c *conn) translateRuntimeID(runtimeId uint64, serverSent bool) uint64 {
 	search := c.runtimeID
 	replace := uint64(1)
 	if serverSent {
@@ -522,7 +526,7 @@ func (c *Conn) translateRuntimeID(runtimeId uint64, serverSent bool) uint64 {
 
 // translateUniqueID converts a unique ID based on whether the packet was sent by the server or by the client.
 // It converts the client-side unique ID to the server-side unique ID and vice versa based on the packet direction.
-func (c *Conn) translateUniqueID(runtimeId int64, serverSent bool) int64 {
+func (c *conn) translateUniqueID(runtimeId int64, serverSent bool) int64 {
 	search := c.uniqueID
 	replace := int64(1)
 	if serverSent {
@@ -538,7 +542,7 @@ func (c *Conn) translateUniqueID(runtimeId int64, serverSent bool) int64 {
 
 // translateMetadata updates entity metadata fields that contain unique IDs or runtime IDs,
 // translating them based the packet direction.
-func (c *Conn) translateMetadata(metadata map[uint32]any, serverSent bool) map[uint32]any {
+func (c *conn) translateMetadata(metadata map[uint32]any, serverSent bool) map[uint32]any {
 	for key, value := range metadata {
 		switch key {
 		case protocol.EntityDataKeyOwner:
@@ -561,7 +565,7 @@ func (c *Conn) translateMetadata(metadata map[uint32]any, serverSent bool) map[u
 
 // translateLink updates an entity link by translating the unique IDs of the rider and the ridden entities,
 // based on the packet direction.
-func (c *Conn) translateLink(link protocol.EntityLink, serverSent bool) protocol.EntityLink {
+func (c *conn) translateLink(link protocol.EntityLink, serverSent bool) protocol.EntityLink {
 	link.RiderEntityUniqueID = c.translateUniqueID(link.RiderEntityUniqueID, serverSent)
 	link.RiddenEntityUniqueID = c.translateUniqueID(link.RiddenEntityUniqueID, serverSent)
 	return link
