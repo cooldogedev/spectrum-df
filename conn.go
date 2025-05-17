@@ -95,6 +95,7 @@ func newConn(rwc io.ReadWriteCloser, pool packet.Pool) (*conn, error) {
 		return nil, err
 	}
 	setCache(c.identityData.XUID, connectionRequest.Cache, connectionRequest.ProtocolID)
+	c.latency.Store(time.Duration(0))
 	return c, nil
 }
 
