@@ -53,7 +53,6 @@ type conn struct {
 	latency      atomic.Value
 	pool         packet.Pool
 	closed       chan struct{}
-	mu           sync.Mutex
 }
 
 func newConn(rwc io.ReadWriteCloser, pool packet.Pool) (*conn, error) {
@@ -117,9 +116,6 @@ func (c *conn) ReadPacket() (packet.Packet, error) {
 
 // WritePacket ...
 func (c *conn) WritePacket(pk packet.Packet) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	buf := bufferPool.Get().(*bytes.Buffer)
 	header := headerPool.Get().(*packet.Header)
 	defer func() {
