@@ -2,14 +2,16 @@ package spectrum
 
 import (
 	"github.com/brentp/intintmap"
-	packet2 "github.com/cooldogedev/spectrum/server/packet"
+	spectrumpacket "github.com/cooldogedev/spectrum/server/packet"
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 )
 
 var internalPackets = []uint32{
-	packet2.IDConnectionResponse,
-	packet2.IDLatency,
-	packet2.IDTransfer,
+	spectrumpacket.IDConnectionResponse,
+	spectrumpacket.IDFlush,
+	spectrumpacket.IDLatency,
+	spectrumpacket.IDTransfer,
+	spectrumpacket.IDUpdateCache,
 
 	packet.IDAddActor,
 	packet.IDAddItemActor,

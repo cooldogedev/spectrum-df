@@ -13,8 +13,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	proto "github.com/cooldogedev/spectrum/protocol"
-	packet2 "github.com/cooldogedev/spectrum/server/packet"
+	spectrumprotocol "github.com/cooldogedev/spectrum/protocol"
+	spectrumpacket "github.com/cooldogedev/spectrum/server/packet"
 	"github.com/golang/snappy"
 	"github.com/google/uuid"
 	"github.com/sandertv/gophertunnel/minecraft"
@@ -43,8 +43,8 @@ var headerPool = sync.Pool{
 type conn struct {
 	addr         *net.UDPAddr
 	conn         io.ReadWriteCloser
-	reader       *proto.Reader
-	writer       *proto.Writer
+	reader       *spectrumprotocol.Reader
+	writer       *spectrumprotocol.Writer
 	clientData   login.ClientData
 	identityData login.IdentityData
 	runtimeID    uint64
@@ -58,18 +58,18 @@ type conn struct {
 func newConn(rwc io.ReadWriteCloser, pool packet.Pool) (*conn, error) {
 	c := &conn{
 		conn:   rwc,
-		reader: proto.NewReader(rwc),
-		writer: proto.NewWriter(rwc),
+		reader: spectrumprotocol.NewReader(rwc),
+		writer: spectrumprotocol.NewWriter(rwc),
 		pool:   pool,
 		closed: make(chan struct{}),
 	}
-	connectionRequestPacket, err := c.expect(packet2.IDConnectionRequest)
+	connectionRequestPacket, err := c.expect(spectrumpacket.IDConnectionRequest)
 	if err != nil {
 		_ = c.Close()
 		return nil, err
 	}
 
-	connectionRequest, _ := connectionRequestPacket.(*packet2.ConnectionRequest)
+	connectionRequest, _ := connectionRequestPacket.(*spectrumpacket.ConnectionRequest)
 	addr, err := net.ResolveUDPAddr("udp", connectionRequest.Addr)
 	if err != nil {
 		_ = c.Close()
@@ -89,7 +89,7 @@ func newConn(rwc io.ReadWriteCloser, pool packet.Pool) (*conn, error) {
 
 	c.runtimeID = uint64(crc32.ChecksumIEEE([]byte(c.identityData.XUID)))
 	c.uniqueID = int64(c.runtimeID)
-	if err := c.WritePacket(&packet2.ConnectionResponse{RuntimeID: c.runtimeID, UniqueID: c.uniqueID}); err != nil {
+	if err := c.WritePacket(&spectrumpacket.ConnectionResponse{RuntimeID: c.runtimeID, UniqueID: c.uniqueID}); err != nil {
 		_ = c.Close()
 		return nil, err
 	}
@@ -105,10 +105,10 @@ func (c *conn) ReadPacket() (packet.Packet, error) {
 		return nil, err
 	}
 
-	if pk, ok := pk.(*packet2.Latency); ok {
+	if pk, ok := pk.(*spectrumpacket.Latency); ok {
 		latency := (time.Now().UnixMilli() - pk.Timestamp) + pk.Latency
 		c.latency.Store(time.Duration(latency) * time.Millisecond)
-		_ = c.WritePacket(&packet2.Latency{Timestamp: 0, Latency: latency})
+		_ = c.WritePacket(&spectrumpacket.Latency{Timestamp: 0, Latency: latency})
 		return c.ReadPacket()
 	}
 	return pk, nil
