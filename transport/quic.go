@@ -83,7 +83,7 @@ func (q *QUIC) Close() (err error) {
 	}
 }
 
-func (q *QUIC) handle(connection quic.Connection) {
+func (q *QUIC) handle(connection *quic.Conn) {
 	defer connection.CloseWithError(0, "")
 	for {
 		stream, err := connection.AcceptStream(context.Background())
