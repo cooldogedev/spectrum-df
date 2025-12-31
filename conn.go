@@ -349,7 +349,7 @@ func (c *conn) translatePacket(pk packet.Packet, serverSent bool) packet.Packet 
 		}
 		pk.AbilityData.EntityUniqueID = c.translateUniqueID(pk.AbilityData.EntityUniqueID, serverSent)
 	case *packet.AddVolumeEntity:
-		pk.EntityRuntimeID = c.translateRuntimeID(pk.EntityRuntimeID, serverSent)
+		pk.EntityRuntimeID = uint32(c.translateRuntimeID(uint64(pk.EntityRuntimeID), serverSent))
 	case *packet.AdventureSettings:
 		pk.PlayerUniqueID = c.translateUniqueID(pk.PlayerUniqueID, serverSent)
 	case *packet.AgentAnimation:
@@ -367,7 +367,7 @@ func (c *conn) translatePacket(pk packet.Packet, serverSent bool) packet.Packet 
 		pk.CameraEntityUniqueID = c.translateUniqueID(pk.CameraEntityUniqueID, serverSent)
 		pk.TargetPlayerUniqueID = c.translateUniqueID(pk.TargetPlayerUniqueID, serverSent)
 	case *packet.ChangeMobProperty:
-		pk.EntityUniqueID = c.translateRuntimeID(pk.EntityUniqueID, serverSent)
+		pk.EntityUniqueID = int64(c.translateRuntimeID(uint64(pk.EntityUniqueID), serverSent))
 	case *packet.ClientBoundMapItemData:
 		for i, x := range pk.TrackedObjects {
 			if x.Type == protocol.MapObjectTypeEntity {
@@ -443,7 +443,7 @@ func (c *conn) translatePacket(pk packet.Packet, serverSent bool) packet.Packet 
 	case *packet.RemoveActor:
 		pk.EntityUniqueID = c.translateUniqueID(pk.EntityUniqueID, serverSent)
 	case *packet.RemoveVolumeEntity:
-		pk.EntityRuntimeID = c.translateRuntimeID(pk.EntityRuntimeID, serverSent)
+		pk.EntityRuntimeID = uint32(c.translateRuntimeID(uint64(pk.EntityRuntimeID), serverSent))
 	case *packet.Respawn:
 		pk.EntityRuntimeID = c.translateRuntimeID(pk.EntityRuntimeID, serverSent)
 	case *packet.SetActorData:
