@@ -34,6 +34,7 @@ var internalPackets = []uint32{
 
 	packet.IDSetDisplayObjective,
 	packet.IDStartGame,
+	packet.IDDisconnect,
 }
 
 var packetMap *intintmap.Map
