@@ -440,6 +440,14 @@ func (c *conn) translatePacket(pk packet.Packet, serverSent bool) packet.Packet 
 		for i := range pk.Entries {
 			pk.Entries[i].EntityUniqueID = c.translateUniqueID(pk.Entries[i].EntityUniqueID, serverSent)
 		}
+	case *packet.PrimitiveShapes:
+		for i := range pk.Shapes {
+			attachedEntityId := pk.Shapes[i].AttachedToEntityID
+			val, ok := attachedEntityId.Value()
+			if ok {
+				pk.Shapes[i].AttachedToEntityID = protocol.Option(c.translateUniqueID(val, serverSent))
+			}
+		}
 	case *packet.RemoveActor:
 		pk.EntityUniqueID = c.translateUniqueID(pk.EntityUniqueID, serverSent)
 	case *packet.RemoveVolumeEntity:
