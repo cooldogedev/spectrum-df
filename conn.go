@@ -445,7 +445,7 @@ func (c *conn) translatePacket(pk packet.Packet, serverSent bool) packet.Packet 
 			attachedEntityId := pk.Shapes[i].AttachedToEntityID
 			val, ok := attachedEntityId.Value()
 			if ok {
-				pk.Shapes[i].AttachedToEntityID = protocol.Option(c.translateUniqueID(val, serverSent))
+				pk.Shapes[i].AttachedToEntityID = protocol.Option(int64(c.translateRuntimeID(uint64(val), serverSent)))
 			}
 		}
 	case *packet.RemoveActor:
