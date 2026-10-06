@@ -28,6 +28,7 @@ var internalPackets = []uint32{
 
 	packet.IDPlayerList,
 	packet.IDPlayStatus,
+	packet.IDPrimitiveShapes,
 
 	packet.IDRemoveActor,
 	packet.IDRemoveObjective,
